@@ -9,17 +9,18 @@ Source: [qiqstart/squelch](https://github.com/qiqstart/squelch)
 ## How to use
 
 1. Enter a **callsign** and pick a **mark** (Fox, Hawk, Wolf, Bear, Owl, Lynx).
-2. Choose a **radio face** (Steel, Field, Night, Brick).
-3. Choose a **network**:
+2. Choose a **radio face** — Steel, Field, Night, Brick, plus **Sun** (bright), **Vintage** (old time, knobs on top), and **Rugged** (side PTT).
+3. Pick a **roger** sound: classic beep, a chirp of static, a key click, or silent.
+4. Choose a **network**:
    - **World** — this Squelch instance (the centralized net).
    - **Closed** — paste another Squelch server address. Only people pointed at that server can join.
-4. Pick a **channel** (World, Alpha, Bravo, …) or type a private name.
-5. Hold the disc (or spacebar) to talk. Release to send a roger beep.
-6. **Share** copies a listen link. The other person taps once and hears you. You get a banner (and a browser notification, if allowed) when they join.
+5. Pick a **channel** by number (CH 01 World … CH 06 Local) or type a private name (CH 07–22).
+6. Hold the disc (or spacebar) to talk. Release for the roger you picked.
+7. Press the molded **SHARE** key. It copies the listen URL first, then a short description. Opening that link goes straight to the radio — no extra tap. **PWR** leaves the channel.
 
-A unique channel name is a private room on the same net. Share the channel, and in Closed mode share the server address too.
+You get a banner (and a browser notification, if allowed) when someone joins.
 
-Listen links look like `/?c=night-watch&h=FOX-1`. Closed nets also carry `n=closed&s=https://your-server`.
+Listen links look like `/?c=night-watch&h=FOX-1`. `/?c=2` is Alpha. Closed nets also carry `n=closed&s=https://your-server`.
 
 ## Backend
 
@@ -36,7 +37,7 @@ Rooms cap at 8 operators. Peer rows expire after 30s without a poll.
 npm test
 ```
 
-Covers channel slugs, closed-server URL resolution, PTT gating, join validation, occupancy merge, share-link parsing, ready notifications, roger-beep timing, and radio/operator faces.
+Covers channel numbers, share-link auto-join, copy order, ready notifications, roger/static/silent tones, radio layouts, and the power-on boot sequence.
 
 ## Stack
 
