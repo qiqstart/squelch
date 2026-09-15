@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   OPERATOR_FACES,
   RADIO_FACES,
+  radioFaceLayout,
   radioFaceName,
   resolveOperatorFace,
   resolveRadioFace,
@@ -10,10 +11,10 @@ import {
 import { buildSession, defaultPrefs } from "./session.ts";
 
 describe("radio faces", () => {
-  it("exposes four housings", () => {
+  it("exposes shop, bright, old-time, and rugged housings", () => {
     assert.deepEqual(
       RADIO_FACES.map((f) => f.id),
-      ["steel", "field", "night", "brick"],
+      ["steel", "field", "night", "brick", "sun", "vintage", "rugged"],
     );
   });
 
@@ -22,6 +23,14 @@ describe("radio faces", () => {
     assert.equal(resolveRadioFace("nope"), "steel");
     assert.equal(resolveRadioFace(undefined), "steel");
     assert.equal(radioFaceName("field"), "Field");
+  });
+
+  it("moves keys with the housing", () => {
+    assert.equal(radioFaceLayout("steel"), "stack");
+    assert.equal(radioFaceLayout("sun"), "twin");
+    assert.equal(radioFaceLayout("vintage"), "top");
+    assert.equal(radioFaceLayout("rugged"), "side");
+    assert.equal(radioFaceLayout("nope"), "stack");
   });
 });
 

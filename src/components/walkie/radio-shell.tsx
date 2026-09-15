@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { resolveRadioFace } from "@/lib/walkie/faces";
+import { radioFaceLayout, resolveRadioFace } from "@/lib/walkie/faces";
 
 export function RadioShell({
   faceId,
@@ -15,6 +15,7 @@ export function RadioShell({
   return (
     <div
       data-face={face}
+      data-layout={radioFaceLayout(face)}
       data-tx={transmitting ? "on" : "off"}
       className="radio-shell mx-auto flex w-full max-w-md flex-col items-center"
     >

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BootScreen } from "@/components/walkie/boot-screen";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { shouldShowBoot } from "@/lib/walkie/boot";
 import { formatChannelDial } from "@/lib/walkie/channels";
 import { requestNotifyPermission } from "@/lib/walkie/alerts";
-import { resolveOperatorFace } from "@/lib/walkie/faces";
+import { radioFaceLayout, resolveOperatorFace } from "@/lib/walkie/faces";
 import { sharePayload } from "@/lib/walkie/invite";
 import { useWalkie } from "@/lib/walkie/use-walkie";
 import type { WalkieSession } from "@/lib/walkie/session";
@@ -101,10 +101,7 @@ export function RadioScreen({
     window.setTimeout(() => setShareState("idle"), 2200);
   };
 
-  const showBoot = shouldShowBoot(
-    bootNow - bootStarted,
-    radio.joined || Boolean(radio.micError),
-  );
+  const showBoot = shouldShowBoot(bootNow - bootStarted, radio.joined || Boolean(radio.micError));
 
   if (showBoot) {
     return (
@@ -116,154 +113,247 @@ export function RadioScreen({
     );
   }
 
+  const layout = radioFaceLayout(session.faceId);
+  const pttShape = layout === "side" ? "bar" : "disc";
+
+  const header = (
+    <header className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <span className="radio-led" />
+        <span className="radio-chrome font-mono text-[11px] tracking-[0.28em] uppercase">Squelch</span>
+      </div>
+      {layout === "top" ? (
+        <div className="flex items-center gap-2" aria-hidden="true">
+          <span className="radio-knob" title="VOL" />
+          <span className="radio-knob" title="SQ" />
+        </div>
+      ) : null}
+    </header>
+  );
+
+  const keys = (
+    <RadioKeyRow className={layout === "twin" ? undefined : "mt-3"}>
+      <RadioKey
+        label={shareKeyLabel(shareState)}
+        sub="LINK"
+        title="Copy listen link"
+        onClick={() => void share()}
+      />
+      <RadioKey label="PWR" sub="OFF" title="Leave channel" onClick={onLeave} />
+    </RadioKeyRow>
+  );
+
+  const twinKeys = (
+    <div className="flex min-h-36 w-14 shrink-0 flex-col gap-2">
+      <RadioKey
+        className="flex-1"
+        label={shareKeyLabel(shareState)}
+        sub="LINK"
+        title="Copy listen link"
+        onClick={() => void share()}
+      />
+      <RadioKey className="flex-1" label="PWR" sub="OFF" title="Leave channel" onClick={onLeave} />
+    </div>
+  );
+
+  const lcd = (
+    <section className="radio-lcd mt-3 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] tracking-[0.22em] uppercase opacity-70">{netLabel}</p>
+          <h1 className="mt-1 font-mono text-2xl tracking-[0.14em] uppercase">
+            {formatChannelDial(session.channelNumber)}
+          </h1>
+          <p className="mt-1 truncate font-mono text-xs tracking-[0.18em] uppercase opacity-70">
+            {session.channelName}
+          </p>
+        </div>
+        <Badge variant={radio.transmitting ? "tx" : radio.connectedCount > 0 ? "live" : "default"}>
+          {status}
+        </Badge>
+      </div>
+
+      <div className="mt-4 flex items-center gap-4">
+        <div
+          className={cn(
+            "flex size-12 items-center justify-center rounded-md border border-border bg-raised",
+            talking ? "text-tx" : "text-muted",
+          )}
+        >
+          <OperatorFace
+            id={resolveOperatorFace(talking?.face ?? session.operatorFace)}
+            className="size-8"
+            title={talking?.name ?? session.callsign}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-mono text-sm tracking-wide uppercase">
+            {talking ? talking.name : session.callsign}
+          </p>
+          <p className="mt-0.5 text-xs opacity-70">
+            {talking ? (talking.self ? "You are talking" : "Incoming") : "Standby"}
+          </p>
+          <div className="mt-2">
+            <VuMeter level={radio.level} hot={radio.transmitting} />
+          </div>
+        </div>
+      </div>
+
+      {radio.alert ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mt-3 rounded-md border border-live/30 bg-live/10 px-3 py-2 text-sm text-fg"
+        >
+          {radio.alert.message}
+        </p>
+      ) : null}
+      {radio.micError ? <p className="mt-3 text-xs text-tx">{radio.micError}</p> : null}
+      {radio.channelFull ? (
+        <p className="mt-3 text-xs opacity-70">Channel is at capacity. Leave and try another.</p>
+      ) : null}
+    </section>
+  );
+
+  const roster = (
+    <ul className="mt-3 flex flex-col gap-2">
+      <li className="flex items-center justify-between rounded-md bg-raised px-3 py-2">
+        <span className="flex min-w-0 items-center gap-2 text-sm text-fg">
+          <OperatorFace id={session.operatorFace} className="size-5 text-muted" />
+          <span className="truncate">{session.callsign}</span>
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-subtle">You</span>
+      </li>
+      {radio.operators.length === 0 ? (
+        <li className="radio-chrome px-1 py-3 text-sm">Share a listen link with the SHARE key.</li>
+      ) : (
+        radio.operators.map((op) => (
+          <li
+            key={op.id}
+            className="flex items-center justify-between gap-3 rounded-md bg-raised px-3 py-2"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <OperatorFace
+                id={resolveOperatorFace(op.face)}
+                className={cn(
+                  "size-5",
+                  op.speaking ? "text-tx" : op.connectionState === "connected" ? "text-live" : "text-subtle",
+                )}
+              />
+              <span className="truncate text-sm text-fg">{op.name}</span>
+            </span>
+            <span
+              className={cn(
+                "flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider tabular-nums",
+                op.speaking ? "text-tx" : "text-subtle",
+              )}
+            >
+              {op.speaking ? (
+                <Volume2 className="size-3.5" />
+              ) : op.connectionState === "connected" ? null : (
+                <VolumeX className="size-3.5" />
+              )}
+              {op.speaking
+                ? "Talking"
+                : op.connectionState === "connected"
+                  ? op.rttMs != null
+                    ? `${op.rttMs} ms`
+                    : "Linked"
+                  : op.connectionState === "failed"
+                    ? "Blocked"
+                    : "Linking"}
+            </span>
+          </li>
+        ))
+      )}
+    </ul>
+  );
+
+  const ptt = (
+    <PttButton
+      transmitting={radio.transmitting}
+      disabled={!radio.micReady || radio.channelFull}
+      onPress={radio.startTalk}
+      onRelease={radio.stopTalk}
+      shape={pttShape}
+    />
+  );
+
+  const hint = (
+    <p className="radio-chrome text-center text-xs">
+      {radio.micReady
+        ? coarse
+          ? "Hold to transmit — release for roger"
+          : "Hold to talk or use spacebar — release for roger"
+        : "Waiting for microphone"}
+    </p>
+  );
+
+  let body: ReactNode;
+  if (layout === "side") {
+    body = (
+      <>
+        <div className="flex items-stretch gap-3">
+          {ptt}
+          <div className="min-w-0 flex-1">
+            {header}
+            {keys}
+            {lcd}
+            <SpeakerGrille className="mt-3" />
+            {roster}
+          </div>
+        </div>
+        <div className="mt-3">{hint}</div>
+      </>
+    );
+  } else if (layout === "twin") {
+    body = (
+      <>
+        {header}
+        {lcd}
+        <SpeakerGrille className="mt-3" />
+        {roster}
+        <section className="mt-4 flex items-center justify-center gap-3">
+          {twinKeys}
+          {ptt}
+        </section>
+        <div className="mt-3">{hint}</div>
+      </>
+    );
+  } else if (layout === "top") {
+    body = (
+      <>
+        {header}
+        {keys}
+        {lcd}
+        <SpeakerGrille className="mt-3" />
+        {roster}
+        <section className="mt-4 flex flex-col items-center gap-3">
+          {ptt}
+          {hint}
+        </section>
+      </>
+    );
+  } else {
+    body = (
+      <>
+        {header}
+        {keys}
+        {lcd}
+        <SpeakerGrille className="mt-3" />
+        {roster}
+        <section className="mt-4 flex flex-col items-center gap-3">
+          {ptt}
+          {hint}
+        </section>
+      </>
+    );
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
       <RadioShell faceId={session.faceId} transmitting={radio.transmitting}>
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="radio-led" />
-            <span className="font-mono text-[11px] tracking-[0.28em] text-muted uppercase">Squelch</span>
-          </div>
-        </header>
-
-        <RadioKeyRow className="mt-3">
-          <RadioKey
-            label={shareKeyLabel(shareState)}
-            sub="LINK"
-            title="Copy listen link"
-            onClick={() => void share()}
-          />
-          <RadioKey label="PWR" sub="OFF" title="Leave channel" onClick={onLeave} />
-        </RadioKeyRow>
-
-        <section className="radio-lcd mt-3 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-mono text-[11px] tracking-[0.22em] uppercase opacity-70">{netLabel}</p>
-              <h1 className="mt-1 font-mono text-2xl tracking-[0.14em] uppercase">
-                {formatChannelDial(session.channelNumber)}
-              </h1>
-              <p className="mt-1 truncate font-mono text-xs tracking-[0.18em] uppercase opacity-70">
-                {session.channelName}
-              </p>
-            </div>
-            <Badge variant={radio.transmitting ? "tx" : radio.connectedCount > 0 ? "live" : "default"}>
-              {status}
-            </Badge>
-          </div>
-
-          <div className="mt-4 flex items-center gap-4">
-            <div
-              className={cn(
-                "flex size-12 items-center justify-center rounded-md border border-border bg-raised",
-                talking ? "text-tx" : "text-muted",
-              )}
-            >
-              <OperatorFace
-                id={resolveOperatorFace(talking?.face ?? session.operatorFace)}
-                className="size-8"
-                title={talking?.name ?? session.callsign}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-mono text-sm tracking-wide uppercase">
-                {talking ? talking.name : session.callsign}
-              </p>
-              <p className="mt-0.5 text-xs opacity-70">
-                {talking ? (talking.self ? "You are talking" : "Incoming") : "Standby"}
-              </p>
-              <div className="mt-2">
-                <VuMeter level={radio.level} hot={radio.transmitting} />
-              </div>
-            </div>
-          </div>
-
-          {radio.alert ? (
-            <p
-              role="status"
-              aria-live="polite"
-              className="mt-3 rounded-md border border-live/30 bg-live/10 px-3 py-2 text-sm text-fg"
-            >
-              {radio.alert.message}
-            </p>
-          ) : null}
-          {radio.micError ? <p className="mt-3 text-xs text-tx">{radio.micError}</p> : null}
-          {radio.channelFull ? (
-            <p className="mt-3 text-xs opacity-70">Channel is at capacity. Leave and try another.</p>
-          ) : null}
-        </section>
-
-        <SpeakerGrille className="mt-3" />
-
-        <ul className="mt-3 flex flex-col gap-2">
-          <li className="flex items-center justify-between rounded-md bg-raised px-3 py-2">
-            <span className="flex min-w-0 items-center gap-2 text-sm text-fg">
-              <OperatorFace id={session.operatorFace} className="size-5 text-muted" />
-              <span className="truncate">{session.callsign}</span>
-            </span>
-            <span className="font-mono text-[11px] uppercase tracking-wider text-subtle">You</span>
-          </li>
-          {radio.operators.length === 0 ? (
-            <li className="px-1 py-3 text-sm text-subtle">
-              Share a listen link with the SHARE key.
-            </li>
-          ) : (
-            radio.operators.map((op) => (
-              <li
-                key={op.id}
-                className="flex items-center justify-between gap-3 rounded-md bg-raised px-3 py-2"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <OperatorFace
-                    id={resolveOperatorFace(op.face)}
-                    className={cn(
-                      "size-5",
-                      op.speaking ? "text-tx" : op.connectionState === "connected" ? "text-live" : "text-subtle",
-                    )}
-                  />
-                  <span className="truncate text-sm text-fg">{op.name}</span>
-                </span>
-                <span
-                  className={cn(
-                    "flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider tabular-nums",
-                    op.speaking ? "text-tx" : "text-subtle",
-                  )}
-                >
-                  {op.speaking ? (
-                    <Volume2 className="size-3.5" />
-                  ) : op.connectionState === "connected" ? null : (
-                    <VolumeX className="size-3.5" />
-                  )}
-                  {op.speaking
-                    ? "Talking"
-                    : op.connectionState === "connected"
-                      ? op.rttMs != null
-                        ? `${op.rttMs} ms`
-                        : "Linked"
-                      : op.connectionState === "failed"
-                        ? "Blocked"
-                        : "Linking"}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
-
-        <section className="mt-4 flex flex-col items-center gap-3">
-          <PttButton
-            transmitting={radio.transmitting}
-            disabled={!radio.micReady || radio.channelFull}
-            onPress={radio.startTalk}
-            onRelease={radio.stopTalk}
-          />
-          <p className="text-center text-xs text-subtle">
-            {radio.micReady
-              ? coarse
-                ? "Hold the disc to transmit — release for roger"
-                : "Hold the disc or spacebar — release for roger"
-              : "Waiting for microphone"}
-          </p>
-        </section>
+        {body}
       </RadioShell>
     </main>
   );

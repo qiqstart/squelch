@@ -5,12 +5,15 @@ export function PttButton({
   disabled,
   onPress,
   onRelease,
+  shape = "disc",
 }: {
   transmitting: boolean;
   disabled?: boolean;
   onPress: () => void;
   onRelease: () => void;
+  shape?: "disc" | "bar";
 }) {
+  const bar = shape === "bar";
   return (
     <button
       type="button"
@@ -18,13 +21,16 @@ export function PttButton({
       aria-pressed={transmitting}
       aria-label={transmitting ? "On air — release to stop" : "Hold to talk"}
       className={cn(
-        "relative flex size-36 sm:size-44 select-none flex-col items-center justify-center",
-        "rounded-full border-2 font-medium tracking-[0.18em]",
-        "touch-none outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-150",
+        "relative select-none font-medium tracking-[0.18em]",
+        "border-2 touch-none outline-none",
+        "transition-[background-color,border-color,color,box-shadow,transform] duration-150",
         "ease-[cubic-bezier(0.22,1,0.36,1)]",
         "focus-visible:ring-2 focus-visible:ring-accent/60",
+        bar
+          ? "flex h-52 w-14 shrink-0 flex-col items-center justify-center rounded-[18px] sm:h-60"
+          : "flex size-36 sm:size-44 flex-col items-center justify-center rounded-full",
         transmitting
-          ? "scale-[0.98] border-tx bg-tx text-tx-fg shadow-[0_0_0_10px_rgb(196_92_74_/_0.16)]"
+          ? "scale-[0.98] border-tx bg-tx text-tx-fg shadow-[0_0_0_8px_rgb(196_92_74_/_0.16)]"
           : "border-border bg-raised text-fg hover:border-accent/50",
         disabled && "opacity-40",
       )}
@@ -39,11 +45,11 @@ export function PttButton({
       onLostPointerCapture={onRelease}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <span className="font-mono text-[11px] uppercase text-current/80">
+      <span className={cn("font-mono text-[11px] uppercase text-current/80", bar && "rotate-180 [writing-mode:vertical-rl]")}>
         {transmitting ? "On air" : "Hold"}
       </span>
-      <span className="mt-1 font-sans text-lg tracking-[0.28em] uppercase">
-        {transmitting ? "Talk" : "Talk"}
+      <span className={cn("font-sans text-lg tracking-[0.28em] uppercase", bar ? "rotate-180 [writing-mode:vertical-rl]" : "mt-1")}>
+        Talk
       </span>
     </button>
   );
