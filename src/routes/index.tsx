@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { BootScreen } from "@/components/walkie/boot-screen";
 import { JoinScreen } from "@/components/walkie/join-screen";
 import { RadioScreen } from "@/components/walkie/radio-screen";
+import { formatChannelDial } from "@/lib/walkie/channels";
 import {
   autoJoinFromInvite,
   coerceInviteSearch,
@@ -64,10 +66,10 @@ function Home() {
 
   if (booting) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-4">
-        <p className="font-mono text-[11px] tracking-[0.28em] text-muted uppercase">Squelch</p>
-        <p className="mt-3 font-mono text-sm tracking-[0.18em] text-fg uppercase">Opening channel</p>
-      </main>
+      <BootScreen
+        faceId={parsed.ok ? parsed.invite.faceId ?? undefined : undefined}
+        channelDial={parsed.ok ? formatChannelDial(parsed.invite.channelNumber) : undefined}
+      />
     );
   }
 

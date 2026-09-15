@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { BootScreen } from "@/components/walkie/boot-screen";
 import { OperatorFace } from "@/components/walkie/operator-face";
 import { PttButton } from "@/components/walkie/ptt-button";
 import { RadioKey, RadioKeyRow, shareKeyLabel } from "@/components/walkie/radio-key";
 import { RadioShell, SpeakerGrille } from "@/components/walkie/radio-shell";
 import { VuMeter } from "@/components/walkie/vu-meter";
 import { cn } from "@/lib/utils";
+import { shouldShowBoot } from "@/lib/walkie/boot";
 import { formatChannelDial } from "@/lib/walkie/channels";
 import { requestNotifyPermission } from "@/lib/walkie/alerts";
 import { resolveOperatorFace } from "@/lib/walkie/faces";
@@ -24,6 +26,10 @@ export function RadioScreen({
   const radio = useWalkie(session);
   const [coarse, setCoarse] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "copied" | "failed">("idle");
+  const [bootStarted] = useState(() => (typeof performance === "undefined" ? 0 : performance.now()));
+  const [bootNow, setBootNow] = useState(bootStarted);
+  const linkedRef = useRef(false);
+  linkedRef.current = radio.joined || Boolean(radio.micError);
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse)");
@@ -32,6 +38,18 @@ export function RadioScreen({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = (t: number) => {
+      setBootNow(t);
+      if (shouldShowBoot(t - bootStarted, linkedRef.current)) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [bootStarted]);
 
   const netLabel = session.mode === "world" ? "World net" : "Closed net";
   const talking = radio.transmitting
@@ -82,6 +100,21 @@ export function RadioScreen({
     }
     window.setTimeout(() => setShareState("idle"), 2200);
   };
+
+  const showBoot = shouldShowBoot(
+    bootNow - bootStarted,
+    radio.joined || Boolean(radio.micError),
+  );
+
+  if (showBoot) {
+    return (
+      <BootScreen
+        faceId={session.faceId}
+        channelDial={formatChannelDial(session.channelNumber)}
+        caption={radio.joined ? "Linked" : "Opening channel"}
+      />
+    );
+  }
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
