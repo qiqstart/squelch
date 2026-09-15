@@ -16,7 +16,7 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test scripts/brand-check.test.mjs scripts/browser-smoke-verdict.test.mjs scripts/check-auth-invariant.test.mjs scripts/migration-plan.test.mjs scripts/preview.test.mjs scripts/sign-out-plan.test.mjs scripts/with-app-env.test.mjs scripts/write-atomic.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/walkie/protocol.test.ts src/lib/walkie/server.test.ts src/lib/walkie/ptt.test.ts src/lib/walkie/session.test.ts src/lib/walkie/channels.test.ts src/lib/walkie/invite.test.ts",
+    "test": "node --test scripts/brand-check.test.mjs scripts/browser-smoke-verdict.test.mjs scripts/check-auth-invariant.test.mjs scripts/migration-plan.test.mjs scripts/preview.test.mjs scripts/sign-out-plan.test.mjs scripts/with-app-env.test.mjs scripts/write-atomic.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/walkie/protocol.test.ts src/lib/walkie/server.test.ts src/lib/walkie/ptt.test.ts src/lib/walkie/session.test.ts src/lib/walkie/channels.test.ts src/lib/walkie/invite.test.ts src/lib/walkie/alerts.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

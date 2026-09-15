@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { P2PRoom, type PeerInfo } from "@/lib/multiplayer";
-import { isPttWire, newPeerId } from "./protocol";
+import { isHelloWire, isPttWire, isRogerWire, newPeerId } from "./protocol";
 import { isTypingTarget, peakLevel, shouldTransmit } from "./ptt";
 import type { WalkieSession } from "./session";
+import {
+  makeReadyAlert,
+  newlyConnectedIds,
+  postReadyNotification,
+  shouldAnnounce,
+  type ReadyAlert,
+} from "./alerts";
 
 export interface RemoteOperator {
   id: string;
@@ -10,6 +17,7 @@ export interface RemoteOperator {
   connectionState: RTCPeerConnectionState;
   rttMs: number | null;
   speaking: boolean;
+  face?: string;
 }
 
 export interface WalkieHandle {
@@ -22,8 +30,10 @@ export interface WalkieHandle {
   operators: RemoteOperator[];
   connectedCount: number;
   channelFull: boolean;
+  alert: ReadyAlert | null;
   startTalk: () => void;
   stopTalk: () => void;
+  dismissAlert: () => void;
 }
 
 const MIC_CONSTRAINTS: MediaStreamConstraints = {
@@ -36,6 +46,18 @@ const MIC_CONSTRAINTS: MediaStreamConstraints = {
   video: false,
 };
 
+function browserNotify(): ((title: string, options: { body: string; tag: string }) => void) | null {
+  if (typeof Notification === "undefined") return null;
+  if (Notification.permission !== "granted") return null;
+  return (title, options) => {
+    try {
+      new Notification(title, { body: options.body, tag: options.tag });
+    } catch {
+      // Embedded previews may block Notification constructors.
+    }
+  };
+}
+
 export function useWalkie(session: WalkieSession): WalkieHandle {
   const [selfId] = useState(() => newPeerId());
   const [joined, setJoined] = useState(false);
@@ -43,10 +65,12 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
   const [micError, setMicError] = useState<string | null>(null);
   const [peers, setPeers] = useState<PeerInfo[]>([]);
   const [speaking, setSpeaking] = useState<Record<string, boolean>>({});
+  const [faces, setFaces] = useState<Record<string, string>>({});
   const [level, setLevel] = useState(0);
   const [channelFull, setChannelFull] = useState(false);
   const [pointerDown, setPointerDown] = useState(false);
   const [spaceDown, setSpaceDown] = useState(false);
+  const [alert, setAlert] = useState<ReadyAlert | null>(null);
 
   const roomRef = useRef<P2PRoom | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -57,16 +81,32 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
   const spaceDownRef = useRef(false);
   const micReadyRef = useRef(false);
   const lastTalkRef = useRef(false);
+  const peersRef = useRef<PeerInfo[]>([]);
+  const greetedRef = useRef(new Set<string>());
+  const announcedRef = useRef(new Set<string>());
+  const connectedRef = useRef<string[]>([]);
+  const sessionRef = useRef(session);
+  const onRemoteRoger = useRef<(() => void) | null>(null);
 
   pointerDownRef.current = pointerDown;
   spaceDownRef.current = spaceDown;
   micReadyRef.current = micReady;
+  peersRef.current = peers;
+  sessionRef.current = session;
 
   const transmitting = shouldTransmit({
     pointerDown,
     spaceDown,
     micReady,
   });
+
+  const announceReady = useCallback((peerId: string, name: string, viaInvite: boolean) => {
+    if (!shouldAnnounce(peerId, announcedRef.current)) return;
+    announcedRef.current.add(peerId);
+    const next = makeReadyAlert({ id: peerId, name, viaInvite });
+    setAlert(next);
+    postReadyNotification(next, browserNotify());
+  }, []);
 
   const applyTalk = useCallback((talk: boolean) => {
     const room = roomRef.current;
@@ -93,8 +133,21 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
       onConnected: () => setJoined(true),
       onChannelFull: () => setChannelFull(true),
       onMessage: (from, data) => {
-        if (!isPttWire(data)) return;
-        setSpeaking((prev) => ({ ...prev, [from]: data.on }));
+        if (isPttWire(data)) {
+          setSpeaking((prev) => ({ ...prev, [from]: data.on }));
+          return;
+        }
+        if (isHelloWire(data)) {
+          if (data.face) {
+            setFaces((prev) => ({ ...prev, [from]: data.face as string }));
+          }
+          const name = peersRef.current.find((p) => p.id === from)?.name || "An operator";
+          announceReady(from, name, data.via === "invite");
+          return;
+        }
+        if (isRogerWire(data)) {
+          onRemoteRoger.current?.();
+        }
       },
       onRemoteStream: (peerId, stream) => {
         let el = audioNodes.current.get(peerId);
@@ -122,6 +175,8 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
           delete next[peerId];
           return next;
         });
+        greetedRef.current.delete(peerId);
+        announcedRef.current.delete(peerId);
       },
     });
     roomRef.current = p2p;
@@ -174,7 +229,50 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
       audioCtxRef.current = null;
       analyserRef.current = null;
     };
-  }, [selfId, session.channelId, session.callsign, session.signalingUrl]);
+  }, [selfId, session.channelId, session.callsign, session.signalingUrl, announceReady]);
+
+  const connectedKey = peers
+    .filter((p) => p.connectionState === "connected")
+    .map((p) => p.id)
+    .sort()
+    .join("\0");
+
+  useEffect(() => {
+    const room = roomRef.current;
+    if (!room) return;
+    const connected = connectedKey ? connectedKey.split("\0") : [];
+    const fresh = newlyConnectedIds(connectedRef.current, connected);
+    connectedRef.current = connected;
+    for (const id of connected) {
+      if (greetedRef.current.has(id)) continue;
+      greetedRef.current.add(id);
+      room.send(
+        {
+          type: "hello",
+          via: sessionRef.current.viaInvite ? "invite" : "direct",
+          face: sessionRef.current.operatorFace,
+        },
+        id,
+      );
+    }
+    if (fresh.length === 0) return;
+    const timers = fresh.map((id) =>
+      window.setTimeout(() => {
+        const peer = peersRef.current.find((p) => p.id === id);
+        if (!peer || peer.connectionState !== "connected") return;
+        announceReady(id, peer.name || "An operator", false);
+      }, 1200),
+    );
+    return () => {
+      for (const t of timers) window.clearTimeout(t);
+    };
+  }, [connectedKey, announceReady]);
+
+  useEffect(() => {
+    if (!alert) return;
+    const t = window.setTimeout(() => setAlert(null), 8000);
+    return () => window.clearTimeout(t);
+  }, [alert]);
 
   useEffect(() => {
     let raf = 0;
@@ -235,12 +333,15 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     setPointerDown(false);
   }, []);
 
+  const dismissAlert = useCallback(() => setAlert(null), []);
+
   const operators: RemoteOperator[] = peers.map((p) => ({
     id: p.id,
     name: p.name || p.id,
     connectionState: p.connectionState,
     rttMs: p.rttMs,
     speaking: Boolean(speaking[p.id]),
+    face: faces[p.id],
   }));
 
   const connectedCount = operators.filter((o) => o.connectionState === "connected").length;
@@ -255,7 +356,9 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     operators,
     connectedCount,
     channelFull,
+    alert,
     startTalk,
     stopTalk,
+    dismissAlert,
   };
 }

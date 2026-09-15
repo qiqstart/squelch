@@ -1,7 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  isHelloWire,
   isPttWire,
+  isRogerWire,
   isValidSignalId,
   isValidSignalPayload,
   MAX_SIGNAL_PAYLOAD_BYTES,
@@ -59,5 +61,21 @@ describe("isPttWire", () => {
     assert.equal(isPttWire({ type: "ptt" }), false);
     assert.equal(isPttWire({ type: "chat", on: true }), false);
     assert.equal(isPttWire(null), false);
+  });
+});
+
+describe("isHelloWire", () => {
+  it("accepts invite and direct hellos", () => {
+    assert.equal(isHelloWire({ type: "hello", via: "invite" }), true);
+    assert.equal(isHelloWire({ type: "hello", via: "direct", face: "fox" }), true);
+    assert.equal(isHelloWire({ type: "hello", via: "other" }), false);
+    assert.equal(isHelloWire({ type: "hello" }), false);
+  });
+});
+
+describe("isRogerWire", () => {
+  it("accepts a roger beep marker", () => {
+    assert.equal(isRogerWire({ type: "roger" }), true);
+    assert.equal(isRogerWire({ type: "ptt", on: false }), false);
   });
 });

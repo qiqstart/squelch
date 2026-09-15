@@ -9,6 +9,8 @@ export const CALLSIGN_MIN = 2;
 export type NetworkMode = "world" | "closed";
 
 export type PttWire = { type: "ptt"; on: boolean };
+export type HelloWire = { type: "hello"; via: "invite" | "direct"; face?: string };
+export type RogerWire = { type: "roger" };
 
 export function isValidSignalId(value: string): boolean {
   return SIGNAL_ID_RE.test(value);
@@ -27,6 +29,20 @@ export function isPttWire(value: unknown): value is PttWire {
   if (!value || typeof value !== "object") return false;
   const rec = value as Record<string, unknown>;
   return rec.type === "ptt" && typeof rec.on === "boolean";
+}
+
+export function isHelloWire(value: unknown): value is HelloWire {
+  if (!value || typeof value !== "object") return false;
+  const rec = value as Record<string, unknown>;
+  if (rec.type !== "hello") return false;
+  if (rec.via !== "invite" && rec.via !== "direct") return false;
+  if (rec.face !== undefined && typeof rec.face !== "string") return false;
+  return true;
+}
+
+export function isRogerWire(value: unknown): value is RogerWire {
+  if (!value || typeof value !== "object") return false;
+  return (value as Record<string, unknown>).type === "roger";
 }
 
 export function sanitizeCallsign(raw: string): string | null {

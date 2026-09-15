@@ -7,6 +7,7 @@ import { VuMeter } from "@/components/walkie/vu-meter";
 import { cn } from "@/lib/utils";
 import { useWalkie } from "@/lib/walkie/use-walkie";
 import { inviteUrlFromSession } from "@/lib/walkie/invite";
+import { requestNotifyPermission } from "@/lib/walkie/alerts";
 import type { WalkieSession } from "@/lib/walkie/session";
 
 export function RadioScreen({
@@ -41,6 +42,7 @@ export function RadioScreen({
 
   const share = async () => {
     const url = inviteUrlFromSession(window.location.origin, session);
+    void requestNotifyPermission(typeof Notification === "undefined" ? undefined : Notification);
     try {
       if (navigator.share) {
         await navigator.share({
@@ -105,6 +107,15 @@ export function RadioScreen({
         <div className="mt-3">
           <VuMeter level={radio.level} hot={radio.transmitting} />
         </div>
+        {radio.alert ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 rounded-md border border-live/30 bg-live/10 px-3 py-2 text-sm text-fg"
+          >
+            {radio.alert.message}
+          </p>
+        ) : null}
         {radio.micError ? <p className="mt-3 text-xs text-tx">{radio.micError}</p> : null}
         {radio.channelFull ? (
           <p className="mt-3 text-xs text-muted">This channel is at capacity. Leave and try another.</p>
