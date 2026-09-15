@@ -42,6 +42,8 @@ export function InviteLanding({
       channel: result.session.channelId,
       mode: result.session.mode,
       serverAddress: result.session.serverAddress,
+      faceId: result.session.faceId,
+      operatorFace: prefs.operatorFace,
     });
     onJoin(result.session);
   };

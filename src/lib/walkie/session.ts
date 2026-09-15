@@ -1,7 +1,8 @@
+import { resolveChannel } from "./channels.ts";
+import { resolveOperatorFace, resolveRadioFace } from "./faces.ts";
 import { sanitizeCallsign } from "./protocol.ts";
 import type { NetworkMode } from "./protocol.ts";
 import { resolveSignalingUrl, ServerAddressError } from "./server.ts";
-import { resolveChannel } from "./channels.ts";
 
 const STORAGE_KEY = "squelch.session.v1";
 
@@ -98,8 +99,8 @@ export function buildSession(
       serverAddress: prefs.mode === "closed" ? prefs.serverAddress.trim() : "",
       signalingUrl,
       viaInvite: false,
-      faceId: prefs.faceId || "steel",
-      operatorFace: prefs.operatorFace || "fox",
+      faceId: resolveRadioFace(prefs.faceId),
+      operatorFace: resolveOperatorFace(prefs.operatorFace),
     },
   };
 }

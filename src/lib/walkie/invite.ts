@@ -1,6 +1,7 @@
 /** Shareable listen links: /?c=channel&n=closed&s=origin&h=callsign */
 
 import { channelDisplayName, resolveChannel } from "./channels.ts";
+import { resolveRadioFace } from "./faces.ts";
 import { sanitizeCallsign, sanitizeChannelId, type NetworkMode } from "./protocol.ts";
 import { buildSession, defaultPrefs, type WalkieSession } from "./session.ts";
 import { ServerAddressError, normalizeOrigin } from "./server.ts";
@@ -134,7 +135,7 @@ export function sessionFromInvite(
     channel: invite.channel,
     mode: invite.mode,
     serverAddress: invite.serverAddress,
-    faceId: invite.faceId ?? defaultPrefs().faceId,
+    faceId: resolveRadioFace(invite.faceId),
   });
   if ("session" in result) {
     return { session: { ...result.session, viaInvite: true } };

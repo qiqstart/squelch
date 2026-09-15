@@ -60,6 +60,92 @@
   }
 }
 
+.radio-shell {
+  --radio-shell: var(--color-surface);
+  --radio-bezel: var(--color-raised);
+  --radio-lcd: #10110e;
+  --radio-lcd-fg: var(--color-fg);
+  --radio-led: var(--color-live);
+  --radio-grille: #3a3b36;
+  --radio-housing-radius: 28px;
+}
+
+.radio-shell[data-face="field"] {
+  --radio-shell: #171c15;
+  --radio-bezel: #22281e;
+  --radio-lcd: #0c100b;
+  --radio-lcd-fg: #d5d8cf;
+  --radio-led: var(--color-live);
+  --radio-grille: #3d4638;
+}
+
+.radio-shell[data-face="night"] {
+  --radio-shell: #0a0b09;
+  --radio-bezel: #121311;
+  --radio-lcd: #050605;
+  --radio-lcd-fg: var(--color-live);
+  --radio-led: var(--color-live);
+  --radio-grille: #1c1d1a;
+}
+
+.radio-shell[data-face="brick"] {
+  --radio-shell: #1c1916;
+  --radio-bezel: #27231f;
+  --radio-lcd: #100e0c;
+  --radio-lcd-fg: var(--color-fg);
+  --radio-led: var(--color-tx);
+  --radio-grille: #3f3a34;
+  --radio-housing-radius: 20px;
+}
+
+.radio-antenna {
+  width: 8px;
+  height: 36px;
+  border-radius: 999px 999px 2px 2px;
+  background: color-mix(in oklab, var(--radio-grille) 70%, var(--color-fg) 30%);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+
+.radio-housing {
+  background: var(--radio-shell);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radio-housing-radius);
+  box-shadow:
+    var(--shadow-panel),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+  padding: 16px;
+}
+
+.radio-lcd {
+  background: var(--radio-lcd);
+  color: var(--radio-lcd-fg);
+  border: 1px solid color-mix(in oklab, var(--color-fg) 8%, transparent);
+  border-radius: 12px;
+}
+
+.radio-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--radio-led);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--radio-led) 55%, transparent);
+}
+
+.radio-shell[data-tx="on"] .radio-led {
+  background: var(--color-tx);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-tx) 60%, transparent);
+}
+
+.radio-grille {
+  height: 72px;
+  border-radius: 12px;
+  background-color: var(--radio-bezel);
+  background-image: radial-gradient(circle, var(--radio-grille) 1.15px, transparent 1.3px);
+  background-size: 7px 7px;
+  background-position: 3px 3px;
+  border: 1px solid var(--color-border);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
