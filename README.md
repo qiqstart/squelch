@@ -8,14 +8,18 @@ Source: [qiqstart/squelch](https://github.com/qiqstart/squelch)
 
 ## How to use
 
-1. Enter a **callsign**.
-2. Choose a **network**:
+1. Enter a **callsign** and pick a **mark** (Fox, Hawk, Wolf, Bear, Owl, Lynx).
+2. Choose a **radio face** (Steel, Field, Night, Brick).
+3. Choose a **network**:
    - **World** — this Squelch instance (the centralized net).
    - **Closed** — paste another Squelch server address. Only people pointed at that server can join.
-3. Pick a **channel** (World, Alpha, Bravo, …) or type a private name.
-4. Hold the disc (or spacebar) to talk.
+4. Pick a **channel** (World, Alpha, Bravo, …) or type a private name.
+5. Hold the disc (or spacebar) to talk. Release to send a roger beep.
+6. **Share** copies a listen link. The other person taps once and hears you. You get a banner (and a browser notification, if allowed) when they join.
 
 A unique channel name is a private room on the same net. Share the channel, and in Closed mode share the server address too.
+
+Listen links look like `/?c=night-watch&h=FOX-1`. Closed nets also carry `n=closed&s=https://your-server`.
 
 ## Backend
 
@@ -32,7 +36,7 @@ Rooms cap at 8 operators. Peer rows expire after 30s without a poll.
 npm test
 ```
 
-Covers channel slugs, closed-server URL resolution, PTT gating, join validation, and occupancy merge.
+Covers channel slugs, closed-server URL resolution, PTT gating, join validation, occupancy merge, share-link parsing, ready notifications, roger-beep timing, and radio/operator faces.
 
 ## Stack
 
