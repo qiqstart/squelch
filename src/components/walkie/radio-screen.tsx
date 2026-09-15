@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { LogOut, Share2, Volume2, VolumeX } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Volume2, VolumeX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { OperatorFace } from "@/components/walkie/operator-face";
 import { PttButton } from "@/components/walkie/ptt-button";
+import { RadioKey, RadioKeyRow, shareKeyLabel } from "@/components/walkie/radio-key";
 import { RadioShell, SpeakerGrille } from "@/components/walkie/radio-shell";
 import { VuMeter } from "@/components/walkie/vu-meter";
 import { cn } from "@/lib/utils";
@@ -91,17 +91,17 @@ export function RadioScreen({
             <span className="radio-led" />
             <span className="font-mono text-[11px] tracking-[0.28em] text-muted uppercase">Squelch</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => void share()}>
-              <Share2 className="size-4" />
-              {shareState === "copied" ? "Copied" : shareState === "failed" ? "Failed" : "Share"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onLeave}>
-              <LogOut className="size-4" />
-              Leave
-            </Button>
-          </div>
         </header>
+
+        <RadioKeyRow className="mt-3">
+          <RadioKey
+            label={shareKeyLabel(shareState)}
+            sub="LINK"
+            title="Copy listen link"
+            onClick={() => void share()}
+          />
+          <RadioKey label="PWR" sub="OFF" title="Leave channel" onClick={onLeave} />
+        </RadioKeyRow>
 
         <section className="radio-lcd mt-3 p-3">
           <div className="flex items-start justify-between gap-3">
@@ -172,7 +172,7 @@ export function RadioScreen({
           </li>
           {radio.operators.length === 0 ? (
             <li className="px-1 py-3 text-sm text-subtle">
-              Share the link — they tap once and hear you.
+              Share a listen link with the SHARE key.
             </li>
           ) : (
             radio.operators.map((op) => (
