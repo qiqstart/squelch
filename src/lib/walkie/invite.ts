@@ -1,9 +1,14 @@
 /** Shareable listen links: /?c=channel&n=closed&s=origin&h=callsign */
 
 import { channelDisplayName, resolveChannel } from "./channels.ts";
-import { resolveRadioFace } from "./faces.ts";
 import { sanitizeCallsign, sanitizeChannelId, type NetworkMode } from "./protocol.ts";
-import { buildSession, defaultPrefs, type WalkieSession } from "./session.ts";
+import {
+  buildSession,
+  defaultPrefs,
+  type JoinError,
+  type WalkiePrefs,
+  type WalkieSession,
+} from "./session.ts";
 import { ServerAddressError, normalizeOrigin } from "./server.ts";
 
 export type InviteSearch = {
@@ -128,19 +133,42 @@ export function inviteUrlFromSession(origin: string, session: WalkieSession): st
 export function sessionFromInvite(
   invite: ParsedInvite,
   callsign: string,
+  extras: Partial<WalkiePrefs> = {},
 ): ReturnType<typeof buildSession> {
   const result = buildSession({
     ...defaultPrefs(),
+    ...extras,
     callsign,
     channel: invite.channel,
     mode: invite.mode,
     serverAddress: invite.serverAddress,
-    faceId: resolveRadioFace(invite.faceId),
+    faceId: invite.faceId ?? extras.faceId ?? defaultPrefs().faceId,
   });
   if ("session" in result) {
     return { session: { ...result.session, viaInvite: true } };
   }
   return result;
+}
+
+/** Opening a share link should land on the radio, not a tap interstitial. */
+export function shouldAutoJoin(parsed: ParseInviteResult, skipInvite: boolean): boolean {
+  return parsed.ok && !skipInvite;
+}
+
+export function callsignForInvite(storedCallsign: string, random: () => number = Math.random): string {
+  return sanitizeCallsign(storedCallsign) ?? generateGuestCallsign(random);
+}
+
+export function autoJoinFromInvite(
+  invite: ParsedInvite,
+  prefs: Pick<WalkiePrefs, "callsign" | "operatorFace" | "faceId">,
+  random: () => number = Math.random,
+): { session: WalkieSession } | { errors: JoinError[] } {
+  const callsign = callsignForInvite(prefs.callsign, random);
+  return sessionFromInvite(invite, callsign, {
+    operatorFace: prefs.operatorFace,
+    faceId: prefs.faceId,
+  });
 }
 
 export function generateGuestCallsign(random: () => number = Math.random): string {

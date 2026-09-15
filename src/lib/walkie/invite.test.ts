@@ -1,7 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  autoJoinFromInvite,
   buildInviteSearch,
+  callsignForInvite,
   coerceInviteSearch,
   generateGuestCallsign,
   inviteHeadline,
@@ -9,6 +11,7 @@ import {
   inviteUrlFromSession,
   parseInviteSearch,
   sessionFromInvite,
+  shouldAutoJoin,
 } from "./invite.ts";
 import { defaultPrefs, type WalkieSession } from "./session.ts";
 
@@ -115,6 +118,54 @@ describe("sessionFromInvite", () => {
     assert.equal(result.session.callsign, "G-AB12");
     assert.equal(result.session.viaInvite, true);
     assert.equal(result.session.signalingUrl, "/api/rtc");
+  });
+});
+
+describe("auto-join from a share link", () => {
+  it("should auto-join a valid invite unless the operator left", () => {
+    const parsed = parseInviteSearch({ c: "alpha", h: "FOX-1" });
+    assert.equal(shouldAutoJoin(parsed, false), true);
+    assert.equal(shouldAutoJoin(parsed, true), false);
+    assert.equal(shouldAutoJoin({ ok: false, reason: "missing" }, false), false);
+  });
+
+  it("reuses a stored callsign and otherwise mints a guest", () => {
+    assert.equal(callsignForInvite("FOX-1"), "FOX-1");
+    assert.equal(callsignForInvite("x", () => 0), "G-AAAA");
+    assert.equal(callsignForInvite("  ", () => 0), "G-AAAA");
+  });
+
+  it("lands on the radio with viaInvite set, no tap required", () => {
+    const parsed = parseInviteSearch({ c: "bravo", h: "Nighthawk", f: "night" });
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) return;
+    const result = autoJoinFromInvite(
+      parsed.invite,
+      { callsign: "", operatorFace: "owl", faceId: "steel" },
+      () => 0,
+    );
+    assert.ok("session" in result);
+    if (!("session" in result)) return;
+    assert.equal(result.session.channelId, "bravo");
+    assert.equal(result.session.callsign, "G-AAAA");
+    assert.equal(result.session.viaInvite, true);
+    assert.equal(result.session.operatorFace, "owl");
+    assert.equal(result.session.faceId, "night");
+  });
+
+  it("keeps the stored housing when the link has no face", () => {
+    const parsed = parseInviteSearch({ c: "alpha" });
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) return;
+    const result = autoJoinFromInvite(parsed.invite, {
+      callsign: "FOX-2",
+      operatorFace: "lynx",
+      faceId: "brick",
+    });
+    assert.ok("session" in result);
+    if (!("session" in result)) return;
+    assert.equal(result.session.callsign, "FOX-2");
+    assert.equal(result.session.faceId, "brick");
   });
 });
 
