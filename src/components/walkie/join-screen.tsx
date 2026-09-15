@@ -115,8 +115,8 @@ export function JoinScreen({
         </p>
       </header>
 
-      <form onSubmit={submit} className="flex flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-2">
+      <form onSubmit={submit} className="flex flex-col gap-6">
+        <div className="flex shrink-0 flex-col gap-2">
           <Label htmlFor="callsign">Callsign</Label>
           <Input
             id="callsign"
@@ -135,7 +135,68 @@ export function JoinScreen({
           )}
         </div>
 
-        <fieldset className="flex flex-col gap-2">
+        <fieldset className="flex shrink-0 flex-col gap-2">
+          <legend className="text-xs font-medium tracking-wide text-muted">
+            Your mark
+            <span className="text-subtle">
+              {" · "}
+              {OPERATOR_FACES.find((f) => f.id === prefs.operatorFace)?.name ?? "Fox"}
+            </span>
+          </legend>
+          <div className="grid grid-cols-6 gap-2">
+            {OPERATOR_FACES.map((face) => {
+              const selected = prefs.operatorFace === face.id;
+              return (
+                <button
+                  key={face.id}
+                  type="button"
+                  aria-label={face.name}
+                  aria-pressed={selected}
+                  onClick={() => update({ operatorFace: face.id })}
+                  className={cn(
+                    "flex size-11 items-center justify-center rounded-lg border transition-colors duration-150",
+                    selected
+                      ? "border-accent bg-raised text-fg"
+                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
+                  )}
+                >
+                  <OperatorFace id={face.id} className="size-6" />
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex shrink-0 flex-col gap-2">
+          <legend className="text-xs font-medium tracking-wide text-muted">Radio face</legend>
+          <div className="grid grid-cols-4 gap-2">
+            {RADIO_FACES.map((face) => {
+              const selected = prefs.faceId === face.id;
+              return (
+                <button
+                  key={face.id}
+                  type="button"
+                  onClick={() => update({ faceId: face.id })}
+                  className={cn(
+                    "flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2.5 text-left transition-colors duration-150",
+                    selected
+                      ? "border-accent bg-raised text-fg"
+                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
+                  )}
+                >
+                  <span
+                    data-face={face.id}
+                    className="radio-shell mb-1 h-6 w-full rounded-md border border-border"
+                    style={{ background: "var(--radio-shell)" }}
+                  />
+                  <span className="font-mono text-[11px] tracking-[0.14em] uppercase">{face.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex shrink-0 flex-col gap-2">
           <legend className="text-xs font-medium tracking-wide text-muted">Network</legend>
           <div className="grid grid-cols-2 gap-2">
             <ModeCard
@@ -233,62 +294,7 @@ export function JoinScreen({
           {fieldError("channel") ? <p className="text-xs text-tx">{fieldError("channel")}</p> : null}
         </fieldset>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-xs font-medium tracking-wide text-muted">Radio face</legend>
-          <div className="grid grid-cols-4 gap-2">
-            {RADIO_FACES.map((face) => {
-              const selected = prefs.faceId === face.id;
-              return (
-                <button
-                  key={face.id}
-                  type="button"
-                  onClick={() => update({ faceId: face.id })}
-                  className={cn(
-                    "flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2.5 text-left transition-colors duration-150",
-                    selected
-                      ? "border-accent bg-raised text-fg"
-                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
-                  )}
-                >
-                  <span
-                    data-face={face.id}
-                    className="radio-shell mb-1 h-6 w-full rounded-md border border-border"
-                    style={{ background: "var(--radio-shell)" }}
-                  />
-                  <span className="font-mono text-[11px] tracking-[0.14em] uppercase">{face.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-xs font-medium tracking-wide text-muted">Your mark</legend>
-          <div className="grid grid-cols-6 gap-2">
-            {OPERATOR_FACES.map((face) => {
-              const selected = prefs.operatorFace === face.id;
-              return (
-                <button
-                  key={face.id}
-                  type="button"
-                  aria-label={face.name}
-                  aria-pressed={selected}
-                  onClick={() => update({ operatorFace: face.id })}
-                  className={cn(
-                    "flex size-11 items-center justify-center rounded-lg border transition-colors duration-150",
-                    selected
-                      ? "border-accent bg-raised text-fg"
-                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
-                  )}
-                >
-                  <OperatorFace id={face.id} className="size-6" />
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <div className="mt-auto pt-2">
+        <div className="pt-2">
           <Button type="submit" size="lg" className="w-full">
             Open channel
             <ArrowRight className="size-4" />

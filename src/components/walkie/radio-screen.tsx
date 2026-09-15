@@ -102,7 +102,7 @@ export function RadioScreen({
           </div>
         </header>
 
-        <section className="radio-lcd mt-4 p-4">
+        <section className="radio-lcd mt-3 p-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-[11px] tracking-[0.22em] uppercase opacity-70">{netLabel}</p>
@@ -116,13 +116,13 @@ export function RadioScreen({
           <div className="mt-4 flex items-center gap-4">
             <div
               className={cn(
-                "flex size-16 items-center justify-center rounded-lg border border-border bg-raised",
+                "flex size-12 items-center justify-center rounded-md border border-border bg-raised",
                 talking ? "text-tx" : "text-muted",
               )}
             >
               <OperatorFace
                 id={resolveOperatorFace(talking?.face ?? session.operatorFace)}
-                className="size-10"
+                className="size-8"
                 title={talking?.name ?? session.callsign}
               />
             </div>
@@ -154,9 +154,9 @@ export function RadioScreen({
           ) : null}
         </section>
 
-        <SpeakerGrille className="mt-4" />
+        <SpeakerGrille className="mt-3" />
 
-        <ul className="mt-4 flex flex-col gap-2">
+        <ul className="mt-3 flex flex-col gap-2">
           <li className="flex items-center justify-between rounded-md bg-raised px-3 py-2">
             <span className="flex min-w-0 items-center gap-2 text-sm text-fg">
               <OperatorFace id={session.operatorFace} className="size-5 text-muted" />
@@ -210,7 +210,7 @@ export function RadioScreen({
           )}
         </ul>
 
-        <section className="mt-6 flex flex-col items-center gap-3">
+        <section className="mt-4 flex flex-col items-center gap-3">
           <PttButton
             transmitting={radio.transmitting}
             disabled={!radio.micReady || radio.channelFull}

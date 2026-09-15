@@ -18,7 +18,7 @@ export function PttButton({
       aria-pressed={transmitting}
       aria-label={transmitting ? "On air — release to stop" : "Hold to talk"}
       className={cn(
-        "relative flex size-[min(56vw,220px)] max-h-[220px] select-none flex-col items-center justify-center",
+        "relative flex size-36 sm:size-44 select-none flex-col items-center justify-center",
         "rounded-full border-2 font-medium tracking-[0.18em]",
         "touch-none outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-150",
         "ease-[cubic-bezier(0.22,1,0.36,1)]",
