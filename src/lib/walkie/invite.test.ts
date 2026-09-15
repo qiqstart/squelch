@@ -38,9 +38,18 @@ describe("parseInviteSearch", () => {
     if (!result.ok) return;
     assert.equal(result.invite.channel, "night-watch");
     assert.equal(result.invite.channelName, "Night Watch");
+    assert.ok(result.invite.channelNumber >= 7);
     assert.equal(result.invite.mode, "world");
     assert.equal(result.invite.hostCallsign, "FOX-1");
     assert.equal(result.invite.serverAddress, "");
+  });
+
+  it("accepts a handheld channel number", () => {
+    const result = parseInviteSearch({ c: "2" });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.invite.channel, "alpha");
+    assert.equal(result.invite.channelNumber, 2);
   });
 
   it("rejects a dirty channel", () => {
@@ -95,6 +104,7 @@ describe("inviteUrlFromSession", () => {
       callsign: "FOX-1",
       channelId: "alpha",
       channelName: "Alpha",
+      channelNumber: 2,
       mode: "world",
       serverAddress: "",
       signalingUrl: "/api/rtc",
@@ -124,6 +134,7 @@ describe("share copy order", () => {
       callsign: "FOX-1",
       channelId: "alpha",
       channelName: "Alpha",
+      channelNumber: 2,
       mode: "world",
       serverAddress: "",
       signalingUrl: "/api/rtc",
@@ -131,10 +142,10 @@ describe("share copy order", () => {
       faceId: "steel",
       operatorFace: "fox",
     };
-    assert.equal(shareDescription(session), "FOX-1 is on Alpha");
+    assert.equal(shareDescription(session), "FOX-1 is on CH 02 Alpha");
     const payload = sharePayload("https://squelch.example", session);
     assert.equal(payload.url, "https://squelch.example/?c=alpha&h=FOX-1&f=steel");
-    assert.equal(payload.description, "FOX-1 is on Alpha");
+    assert.equal(payload.description, "FOX-1 is on CH 02 Alpha");
     assert.ok(payload.text.startsWith(payload.url));
     assert.ok(payload.text.endsWith(payload.description));
     assert.equal(payload.text.indexOf(payload.url), 0);
@@ -218,10 +229,10 @@ describe("inviteHeadline", () => {
     const parsed = parseInviteSearch({ c: "local", h: "FOX-1" });
     assert.equal(parsed.ok, true);
     if (!parsed.ok) return;
-    assert.equal(inviteHeadline(parsed.invite), "FOX-1 is on Local");
+    assert.equal(inviteHeadline(parsed.invite), "FOX-1 is on CH 06 Local");
     assert.equal(
       inviteHeadline({ ...parsed.invite, hostCallsign: null }),
-      "You're invited to Local",
+      "You're invited to CH 06 Local",
     );
   });
 });

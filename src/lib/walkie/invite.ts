@@ -1,6 +1,6 @@
 /** Shareable listen links: /?c=channel&n=closed&s=origin&h=callsign */
 
-import { channelDisplayName, resolveChannel } from "./channels.ts";
+import { channelDisplayName, formatChannelLabel, resolveChannel } from "./channels.ts";
 import { sanitizeCallsign, sanitizeChannelId, type NetworkMode } from "./protocol.ts";
 import {
   buildSession,
@@ -22,6 +22,7 @@ export type InviteSearch = {
 export type ParsedInvite = {
   channel: string;
   channelName: string;
+  channelNumber: number;
   mode: NetworkMode;
   serverAddress: string;
   hostCallsign: string | null;
@@ -73,6 +74,7 @@ export function parseInviteSearch(search: InviteSearch): ParseInviteResult {
     invite: {
       channel: channel.id,
       channelName: channel.name,
+      channelNumber: channel.number,
       mode,
       serverAddress,
       hostCallsign: search.h ? sanitizeCallsign(search.h) : null,
@@ -130,8 +132,10 @@ export function inviteUrlFromSession(origin: string, session: WalkieSession): st
   return `${origin.replace(/\/$/, "")}${path}`;
 }
 
-export function shareDescription(session: Pick<WalkieSession, "callsign" | "channelName">): string {
-  return `${session.callsign} is on ${session.channelName}`;
+export function shareDescription(
+  session: Pick<WalkieSession, "callsign" | "channelId" | "channelName">,
+): string {
+  return `${session.callsign} is on ${formatChannelLabel(session.channelId, session.channelName)}`;
 }
 
 /** Clipboard / share body: link first, then the description. */
@@ -202,8 +206,9 @@ export function generateGuestCallsign(random: () => number = Math.random): strin
 }
 
 export function inviteHeadline(invite: ParsedInvite): string {
-  if (invite.hostCallsign) return `${invite.hostCallsign} is on ${invite.channelName}`;
-  return `You're invited to ${invite.channelName}`;
+  const channel = formatChannelLabel(invite.channel, invite.channelName);
+  if (invite.hostCallsign) return `${invite.hostCallsign} is on ${channel}`;
+  return `You're invited to ${channel}`;
 }
 
 export function inviteChannelLabel(channelId: string): string {

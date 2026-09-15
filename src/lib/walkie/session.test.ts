@@ -15,6 +15,7 @@ describe("buildSession", () => {
     assert.equal(result.session.callsign, "FOX-1");
     assert.equal(result.session.channelId, "alpha");
     assert.equal(result.session.channelName, "Alpha");
+    assert.equal(result.session.channelNumber, 2);
     assert.equal(result.session.signalingUrl, "/api/rtc");
     assert.equal(result.session.viaInvite, false);
     assert.equal(result.session.faceId, "steel");
@@ -30,6 +31,7 @@ describe("buildSession", () => {
     assert.ok("session" in result);
     if (!("session" in result)) return;
     assert.equal(result.session.channelId, "night-watch");
+    assert.ok(result.session.channelNumber >= 7 && result.session.channelNumber <= 22);
   });
 
   it("requires a server on closed mode", () => {

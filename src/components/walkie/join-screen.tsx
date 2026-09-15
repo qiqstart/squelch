@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { OperatorFace } from "@/components/walkie/operator-face";
 import { cn } from "@/lib/utils";
-import { mergeOccupancy, PUBLIC_CHANNELS, type Occupancy } from "@/lib/walkie/channels";
+import { formatChannelDial, mergeOccupancy, PUBLIC_CHANNELS, type Occupancy } from "@/lib/walkie/channels";
 import { OPERATOR_FACES, RADIO_FACES } from "@/lib/walkie/faces";
 import { resolveChannelsUrl } from "@/lib/walkie/server";
 import {
@@ -264,6 +264,9 @@ export function JoinScreen({
                       : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
                   )}
                 >
+                  <span className="font-mono text-[11px] tracking-[0.22em] text-subtle">
+                    {formatChannelDial(ch.number)}
+                  </span>
                   <span className="font-mono text-[11px] tracking-[0.18em] uppercase">{ch.name}</span>
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="text-xs text-subtle">{ch.blurb}</span>

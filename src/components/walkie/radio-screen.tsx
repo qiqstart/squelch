@@ -7,6 +7,7 @@ import { PttButton } from "@/components/walkie/ptt-button";
 import { RadioShell, SpeakerGrille } from "@/components/walkie/radio-shell";
 import { VuMeter } from "@/components/walkie/vu-meter";
 import { cn } from "@/lib/utils";
+import { formatChannelDial } from "@/lib/walkie/channels";
 import { requestNotifyPermission } from "@/lib/walkie/alerts";
 import { resolveOperatorFace } from "@/lib/walkie/faces";
 import { sharePayload } from "@/lib/walkie/invite";
@@ -106,7 +107,12 @@ export function RadioScreen({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-[11px] tracking-[0.22em] uppercase opacity-70">{netLabel}</p>
-              <h1 className="mt-1 font-mono text-2xl tracking-[0.14em] uppercase">{session.channelName}</h1>
+              <h1 className="mt-1 font-mono text-2xl tracking-[0.14em] uppercase">
+                {formatChannelDial(session.channelNumber)}
+              </h1>
+              <p className="mt-1 truncate font-mono text-xs tracking-[0.18em] uppercase opacity-70">
+                {session.channelName}
+              </p>
             </div>
             <Badge variant={radio.transmitting ? "tx" : radio.connectedCount > 0 ? "live" : "default"}>
               {status}

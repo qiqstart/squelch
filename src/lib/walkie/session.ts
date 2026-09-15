@@ -19,6 +19,7 @@ export interface WalkieSession {
   callsign: string;
   channelId: string;
   channelName: string;
+  channelNumber: number;
   mode: NetworkMode;
   serverAddress: string;
   signalingUrl: string;
@@ -95,6 +96,7 @@ export function buildSession(
       callsign,
       channelId: channel.id,
       channelName: channel.name,
+      channelNumber: channel.number,
       mode: prefs.mode,
       serverAddress: prefs.mode === "closed" ? prefs.serverAddress.trim() : "",
       signalingUrl,

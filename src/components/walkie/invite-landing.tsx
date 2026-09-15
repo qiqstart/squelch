@@ -3,6 +3,7 @@ import { Radio, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatChannelLabel } from "@/lib/walkie/channels";
 import {
   generateGuestCallsign,
   inviteHeadline,
@@ -58,7 +59,7 @@ export function InviteLanding({
           <span className="font-mono text-[11px] tracking-[0.28em] uppercase">Squelch</span>
         </div>
         <p className="font-mono text-[11px] tracking-[0.22em] text-muted uppercase">
-          {invite.channelName}
+          {formatChannelLabel(invite.channel, invite.channelName)}
           <span className="text-subtle"> · {netLabel}</span>
         </p>
         <h1 className="mt-3 font-sans text-4xl font-medium leading-tight tracking-tight text-fg sm:text-5xl">
