@@ -10,6 +10,7 @@ import {
   shouldAnnounce,
   type ReadyAlert,
 } from "./alerts";
+import { JOIN_CHIRP, playToneSequence, RELEASE_TONES, rogerOnRelease, type ToneStep } from "./tones";
 
 export interface RemoteOperator {
   id: string;
@@ -87,12 +88,28 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
   const connectedRef = useRef<string[]>([]);
   const sessionRef = useRef(session);
   const onRemoteRoger = useRef<(() => void) | null>(null);
+  const playLocalRef = useRef<(steps: ToneStep[]) => void>(() => {});
 
   pointerDownRef.current = pointerDown;
   spaceDownRef.current = spaceDown;
   micReadyRef.current = micReady;
   peersRef.current = peers;
   sessionRef.current = session;
+
+  playLocalRef.current = (steps: ToneStep[]) => {
+    let ctx = audioCtxRef.current;
+    if (!ctx || ctx.state === "closed") {
+      try {
+        ctx = new AudioContext();
+        audioCtxRef.current = ctx;
+      } catch {
+        return;
+      }
+    }
+    void ctx.resume();
+    playToneSequence(ctx, steps);
+  };
+  onRemoteRoger.current = () => playLocalRef.current(RELEASE_TONES);
 
   const transmitting = shouldTransmit({
     pointerDown,
@@ -106,15 +123,20 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     const next = makeReadyAlert({ id: peerId, name, viaInvite });
     setAlert(next);
     postReadyNotification(next, browserNotify());
+    playLocalRef.current(JOIN_CHIRP);
   }, []);
 
   const applyTalk = useCallback((talk: boolean) => {
     const room = roomRef.current;
     if (!room) return;
+    const was = lastTalkRef.current;
     room.setAudioEnabled(talk);
-    if (talk !== lastTalkRef.current) {
-      lastTalkRef.current = talk;
-      room.send({ type: "ptt", on: talk });
+    if (talk === was) return;
+    lastTalkRef.current = talk;
+    room.send({ type: "ptt", on: talk });
+    if (rogerOnRelease(was, talk)) {
+      room.send({ type: "roger" });
+      playLocalRef.current(RELEASE_TONES);
     }
   }, []);
 
