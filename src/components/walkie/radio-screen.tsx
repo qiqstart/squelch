@@ -9,7 +9,7 @@ import { VuMeter } from "@/components/walkie/vu-meter";
 import { cn } from "@/lib/utils";
 import { requestNotifyPermission } from "@/lib/walkie/alerts";
 import { resolveOperatorFace } from "@/lib/walkie/faces";
-import { inviteUrlFromSession } from "@/lib/walkie/invite";
+import { sharePayload } from "@/lib/walkie/invite";
 import { useWalkie } from "@/lib/walkie/use-walkie";
 import type { WalkieSession } from "@/lib/walkie/session";
 
@@ -54,18 +54,18 @@ export function RadioScreen({
           : "Joining";
 
   const share = async () => {
-    const url = inviteUrlFromSession(window.location.origin, session);
+    const payload = sharePayload(window.location.origin, session);
     void requestNotifyPermission(typeof Notification === "undefined" ? undefined : Notification);
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `Squelch · ${session.channelName}`,
-          text: `${session.callsign} is on ${session.channelName}. Tap to listen.`,
-          url,
+          title: payload.description,
+          text: payload.text,
+          url: payload.url,
         });
         setShareState("copied");
       } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(payload.text);
         setShareState("copied");
       } else {
         setShareState("failed");
@@ -73,7 +73,7 @@ export function RadioScreen({
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(payload.text);
         setShareState("copied");
       } catch {
         setShareState("failed");

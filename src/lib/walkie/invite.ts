@@ -130,6 +130,28 @@ export function inviteUrlFromSession(origin: string, session: WalkieSession): st
   return `${origin.replace(/\/$/, "")}${path}`;
 }
 
+export function shareDescription(session: Pick<WalkieSession, "callsign" | "channelName">): string {
+  return `${session.callsign} is on ${session.channelName}`;
+}
+
+/** Clipboard / share body: link first, then the description. */
+export function shareCopyText(url: string, description: string): string {
+  const link = url.trim();
+  const blurb = description.trim();
+  if (!link) return blurb;
+  if (!blurb) return link;
+  return `${link}\n${blurb}`;
+}
+
+export function sharePayload(
+  origin: string,
+  session: WalkieSession,
+): { url: string; description: string; text: string } {
+  const url = inviteUrlFromSession(origin, session);
+  const description = shareDescription(session);
+  return { url, description, text: shareCopyText(url, description) };
+}
+
 export function sessionFromInvite(
   invite: ParsedInvite,
   callsign: string,

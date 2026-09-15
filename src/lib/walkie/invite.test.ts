@@ -11,6 +11,9 @@ import {
   inviteUrlFromSession,
   parseInviteSearch,
   sessionFromInvite,
+  shareCopyText,
+  shareDescription,
+  sharePayload,
   shouldAutoJoin,
 } from "./invite.ts";
 import { defaultPrefs, type WalkieSession } from "./session.ts";
@@ -103,6 +106,39 @@ describe("inviteUrlFromSession", () => {
       inviteUrlFromSession("https://squelch.example/", session),
       "https://squelch.example/?c=alpha&h=FOX-1&f=steel",
     );
+  });
+});
+
+describe("share copy order", () => {
+  it("puts the link first, then the description", () => {
+    assert.equal(
+      shareCopyText("https://squelch.example/?c=alpha", "FOX-1 is on Alpha"),
+      "https://squelch.example/?c=alpha\nFOX-1 is on Alpha",
+    );
+    assert.equal(shareCopyText("https://squelch.example/?c=alpha", "  "), "https://squelch.example/?c=alpha");
+    assert.equal(shareCopyText("", "FOX-1 is on Alpha"), "FOX-1 is on Alpha");
+  });
+
+  it("builds a payload from the live session", () => {
+    const session: WalkieSession = {
+      callsign: "FOX-1",
+      channelId: "alpha",
+      channelName: "Alpha",
+      mode: "world",
+      serverAddress: "",
+      signalingUrl: "/api/rtc",
+      viaInvite: false,
+      faceId: "steel",
+      operatorFace: "fox",
+    };
+    assert.equal(shareDescription(session), "FOX-1 is on Alpha");
+    const payload = sharePayload("https://squelch.example", session);
+    assert.equal(payload.url, "https://squelch.example/?c=alpha&h=FOX-1&f=steel");
+    assert.equal(payload.description, "FOX-1 is on Alpha");
+    assert.ok(payload.text.startsWith(payload.url));
+    assert.ok(payload.text.endsWith(payload.description));
+    assert.equal(payload.text.indexOf(payload.url), 0);
+    assert.ok(payload.text.indexOf(payload.description) > payload.url.length);
   });
 });
 
