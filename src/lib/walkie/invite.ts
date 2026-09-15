@@ -187,13 +187,14 @@ export function callsignForInvite(storedCallsign: string, random: () => number =
 
 export function autoJoinFromInvite(
   invite: ParsedInvite,
-  prefs: Pick<WalkiePrefs, "callsign" | "operatorFace" | "faceId">,
+  prefs: Pick<WalkiePrefs, "callsign" | "operatorFace" | "faceId" | "rogerSound">,
   random: () => number = Math.random,
 ): { session: WalkieSession } | { errors: JoinError[] } {
   const callsign = callsignForInvite(prefs.callsign, random);
   return sessionFromInvite(invite, callsign, {
     operatorFace: prefs.operatorFace,
     faceId: prefs.faceId,
+    rogerSound: prefs.rogerSound,
   });
 }
 

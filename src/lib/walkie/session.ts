@@ -3,6 +3,7 @@ import { resolveOperatorFace, resolveRadioFace } from "./faces.ts";
 import { sanitizeCallsign } from "./protocol.ts";
 import type { NetworkMode } from "./protocol.ts";
 import { resolveSignalingUrl, ServerAddressError } from "./server.ts";
+import { resolveSound, type SoundId } from "./tones.ts";
 
 const STORAGE_KEY = "squelch.session.v1";
 
@@ -13,6 +14,7 @@ export interface WalkiePrefs {
   serverAddress: string;
   faceId: string;
   operatorFace: string;
+  rogerSound: SoundId;
 }
 
 export interface WalkieSession {
@@ -26,6 +28,7 @@ export interface WalkieSession {
   viaInvite: boolean;
   faceId: string;
   operatorFace: string;
+  rogerSound: SoundId;
 }
 
 export function defaultPrefs(): WalkiePrefs {
@@ -36,6 +39,7 @@ export function defaultPrefs(): WalkiePrefs {
     serverAddress: "",
     faceId: "steel",
     operatorFace: "fox",
+    rogerSound: "roger",
   };
 }
 
@@ -56,6 +60,7 @@ export function loadPrefs(): WalkiePrefs {
         typeof parsed.operatorFace === "string" && parsed.operatorFace
           ? parsed.operatorFace
           : "fox",
+      rogerSound: resolveSound(typeof parsed.rogerSound === "string" ? parsed.rogerSound : undefined),
     };
   } catch {
     return defaultPrefs();
@@ -103,6 +108,7 @@ export function buildSession(
       viaInvite: false,
       faceId: resolveRadioFace(prefs.faceId),
       operatorFace: resolveOperatorFace(prefs.operatorFace),
+      rogerSound: resolveSound(prefs.rogerSound),
     },
   };
 }

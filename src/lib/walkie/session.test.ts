@@ -19,6 +19,7 @@ describe("buildSession", () => {
     assert.equal(result.session.signalingUrl, "/api/rtc");
     assert.equal(result.session.viaInvite, false);
     assert.equal(result.session.faceId, "steel");
+    assert.equal(result.session.rogerSound, "roger");
   });
 
   it("slugs a private channel name", () => {

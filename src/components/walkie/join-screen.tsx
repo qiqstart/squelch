@@ -8,6 +8,7 @@ import { OperatorFace } from "@/components/walkie/operator-face";
 import { cn } from "@/lib/utils";
 import { formatChannelDial, mergeOccupancy, PUBLIC_CHANNELS, type Occupancy } from "@/lib/walkie/channels";
 import { OPERATOR_FACES, RADIO_FACES } from "@/lib/walkie/faces";
+import { SOUND_PRESETS } from "@/lib/walkie/tones";
 import { resolveChannelsUrl } from "@/lib/walkie/server";
 import {
   buildSession,
@@ -190,6 +191,37 @@ export function JoinScreen({
                     style={{ background: "var(--radio-shell)" }}
                   />
                   <span className="font-mono text-[11px] tracking-[0.14em] uppercase">{face.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex shrink-0 flex-col gap-2">
+          <legend className="text-xs font-medium tracking-wide text-muted">
+            Roger
+            <span className="text-subtle">
+              {" · "}
+              {SOUND_PRESETS.find((s) => s.id === prefs.rogerSound)?.name ?? "Roger"}
+            </span>
+          </legend>
+          <div className="grid grid-cols-4 gap-2">
+            {SOUND_PRESETS.map((sound) => {
+              const selected = prefs.rogerSound === sound.id;
+              return (
+                <button
+                  key={sound.id}
+                  type="button"
+                  onClick={() => update({ rogerSound: sound.id })}
+                  className={cn(
+                    "flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2.5 text-left transition-colors duration-150",
+                    selected
+                      ? "border-accent bg-raised text-fg"
+                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-fg",
+                  )}
+                >
+                  <span className="font-mono text-[11px] tracking-[0.14em] uppercase">{sound.name}</span>
+                  <span className="text-xs text-subtle">{sound.blurb}</span>
                 </button>
               );
             })}

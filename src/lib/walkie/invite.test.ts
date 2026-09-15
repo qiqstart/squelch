@@ -111,6 +111,7 @@ describe("inviteUrlFromSession", () => {
       viaInvite: false,
       faceId: "steel",
       operatorFace: "fox",
+      rogerSound: "roger",
     };
     assert.equal(
       inviteUrlFromSession("https://squelch.example/", session),
@@ -141,6 +142,7 @@ describe("share copy order", () => {
       viaInvite: false,
       faceId: "steel",
       operatorFace: "fox",
+      rogerSound: "roger",
     };
     assert.equal(shareDescription(session), "FOX-1 is on CH 02 Alpha");
     const payload = sharePayload("https://squelch.example", session);
@@ -188,7 +190,7 @@ describe("auto-join from a share link", () => {
     if (!parsed.ok) return;
     const result = autoJoinFromInvite(
       parsed.invite,
-      { callsign: "", operatorFace: "owl", faceId: "steel" },
+      { callsign: "", operatorFace: "owl", faceId: "steel", rogerSound: "static" },
       () => 0,
     );
     assert.ok("session" in result);
@@ -198,6 +200,7 @@ describe("auto-join from a share link", () => {
     assert.equal(result.session.viaInvite, true);
     assert.equal(result.session.operatorFace, "owl");
     assert.equal(result.session.faceId, "night");
+    assert.equal(result.session.rogerSound, "static");
   });
 
   it("keeps the stored housing when the link has no face", () => {
@@ -208,6 +211,7 @@ describe("auto-join from a share link", () => {
       callsign: "FOX-2",
       operatorFace: "lynx",
       faceId: "brick",
+      rogerSound: "silent",
     });
     assert.ok("session" in result);
     if (!("session" in result)) return;

@@ -10,7 +10,7 @@ import {
   shouldAnnounce,
   type ReadyAlert,
 } from "./alerts";
-import { JOIN_CHIRP, playToneSequence, RELEASE_TONES, rogerOnRelease, type ToneStep } from "./tones";
+import { joinTonesForSound, playToneSequence, rogerOnRelease, tonesForSound, type ToneStep } from "./tones";
 
 export interface RemoteOperator {
   id: string;
@@ -109,7 +109,7 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     void ctx.resume();
     playToneSequence(ctx, steps);
   };
-  onRemoteRoger.current = () => playLocalRef.current(RELEASE_TONES);
+  onRemoteRoger.current = () => playLocalRef.current(tonesForSound(sessionRef.current.rogerSound));
 
   const transmitting = shouldTransmit({
     pointerDown,
@@ -123,7 +123,7 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     const next = makeReadyAlert({ id: peerId, name, viaInvite });
     setAlert(next);
     postReadyNotification(next, browserNotify());
-    playLocalRef.current(JOIN_CHIRP);
+    playLocalRef.current(joinTonesForSound(sessionRef.current.rogerSound));
   }, []);
 
   const applyTalk = useCallback((talk: boolean) => {
@@ -136,7 +136,7 @@ export function useWalkie(session: WalkieSession): WalkieHandle {
     room.send({ type: "ptt", on: talk });
     if (rogerOnRelease(was, talk)) {
       room.send({ type: "roger" });
-      playLocalRef.current(RELEASE_TONES);
+      playLocalRef.current(tonesForSound(sessionRef.current.rogerSound));
     }
   }, []);
 
